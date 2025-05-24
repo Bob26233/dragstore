@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 全局样式 */
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 自定义工具类 */
+.scrollbar-thin {
+    scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.neutral.300');
+    border-radius: 2px;
+}
+
+.transition-height {
+    transition: max-height 0.3s ease-in-out;
+}
+
+/* 表格样式增强 */
+.table-hover-row tr:hover {
+    background-color: theme('colors.neutral.50');
+}
+
+/* 库存状态标签 */
+.stock-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.stock-badge-in-stock {
+    @apply text-success bg-success/10;
+}
+
+.stock-badge-low-stock {
+    @apply text-warning bg-warning/10;
+}
+
+.stock-badge-out-of-stock {
+    @apply text-danger bg-danger/10;
+}
+
+/* 通知提示样式 */
+.notification-success {
+    @apply border-l-4 border-success;
+}
+
+.notification-success .notification-icon {
+    @apply bg-success/10 text-success;
+}
+
+.notification-error {
+    @apply border-l-4 border-danger;
+}
+
+.notification-error .notification-icon {
+    @apply bg-danger/10 text-danger;
+}
+
+.notification-warning {
+    @apply border-l-4 border-warning;
+}
+
+.notification-warning .notification-icon {
+    @apply bg-warning/10 text-warning;
+}
+
+/* 加载动画 */
+.loading-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50;
+}
+
+.loading-spinner {
+    @apply w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin;
+}

@@ -1,29 +1,34 @@
-<!-- index.html (主页) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>药品交易平台 - 药品列表</title>
+    <title>药品管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-    <!-- 共享样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         primary: '#165DFF',
-                        secondary: '#36D399',
-                        warning: '#FF9F1C',
-                        danger: '#FF595E',
-                        dark: '#1E293B',
-                        light: '#F8FAFC'
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        neutral: {
+                            100: '#F2F3F5',
+                            200: '#E5E6EB',
+                            300: '#C9CDD4',
+                            400: '#86909C',
+                            500: '#4E5969',
+                            600: '#272E3B',
+                            700: '#1D2129',
+                        }
                     },
                     fontFamily: {
-                        inter: ['Inter', 'sans-serif'],
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
                     },
-                }
+                },
             }
         }
     </script>
@@ -32,229 +37,934 @@
             .content-auto {
                 content-visibility: auto;
             }
-            .shadow-card {
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            .stock-badge {
+                @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
             }
-            .transition-all {
-                transition: all 0.3s ease;
+            .stock-badge-in-stock {
+                @apply bg-success/10 text-success;
             }
-            .sidebar-width {
-                width: 240px;
+            .stock-badge-low-stock {
+                @apply bg-warning/10 text-warning;
             }
-            .main-content {
-                width: calc(100% - 240px);
+            .stock-badge-out-of-stock {
+                @apply bg-danger/10 text-danger;
+            }
+            .notification-success {
+                @apply border-success;
+            }
+            .notification-error {
+                @apply border-danger;
+            }
+            .notification-warning {
+                @apply border-warning;
+            }
+            .pagination-item {
+                @apply relative inline-flex items-center px-4 py-2 border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50;
+            }
+            .pagination-item.active {
+                @apply z-10 bg-primary text-white border-primary;
+            }
+            .animate-fade-in {
+                @apply transition-opacity duration-300 opacity-0;
+                animation: fadeIn 0.5s ease-in-out forwards;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
             }
         }
     </style>
 </head>
-<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
-<!-- 顶部导航栏 (共享) -->
-<header class="bg-primary shadow-md sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+<body class="font-inter bg-neutral-100 min-h-screen flex flex-col">
+<!-- 顶部导航栏 -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-            <button id="sidebarToggle" class="md:hidden text-white focus:outline-none">
-                <i class="fa fa-bars text-xl"></i>
+            <i class="fa fa-medkit text-primary text-2xl"></i>
+            <h1 class="text-xl font-bold text-neutral-700">药品管理系统</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="refreshBtn" class="flex items-center space-x-1 text-neutral-500 hover:text-primary transition-colors">
+                <i class="fa fa-refresh"></i>
+                <span>刷新</span>
             </button>
-            <i class="fa fa-medkit text-2xl text-white"></i>
-            <h1 class="text-xl md:text-2xl font-bold text-white">药品交易平台</h1>
+            <button id="helpBtn" class="flex items-center space-x-1 text-neutral-500 hover:text-primary transition-colors">
+                <i class="fa fa-question-circle"></i>
+                <span>帮助</span>
+            </button>
         </div>
-        <div id="digitalClock" class="hidden md:block text-white font-mono text-lg bg-primary/20 px-3 py-1 rounded-lg">
-            00:00:00
-        </div>
-        <nav class="hidden md:flex items-center space-x-6">
-            <a href="index.html" class="text-white hover:text-gray-200 transition-all font-medium">药品管理</a>
-            <a href="#" class="text-white hover:text-gray-200 transition-all font-medium">快速搜索</a>
-        </nav>
     </div>
 </header>
 
-<!-- 主体布局 (共享) -->
-<div class="flex flex-1 overflow-hidden">
-    <!-- 侧边栏 (共享) -->
-    <aside id="sidebar" class="sidebar-width bg-white shadow-md fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 transition-all duration-300">
-        <div class="p-4">
-            <h3 class="text-lg font-semibold text-primary mb-4">功能导航</h3>
-            <ul class="space-y-1">
-                <li>
-                    <a href="index.html" class="flex items-center px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
-                        <i class="fa fa-pills w-6"></i>
-                        <span>药品展示</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="search.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
-                        <i class="fa fa-search w-6"></i>
-                        <span>关键词搜索</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="stock.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
-                        <i class="fa fa-plus-square w-6"></i>
-                        <span>药品库存增加</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <!-- 删除了管理员信息区域 -->
-    </aside>
-
-    <!-- 遮罩层 (共享) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
-
-    <!-- 主要内容区 -->
-    <main class="flex-1 overflow-y-auto p-6 md:pl-0">
-        <div class="container mx-auto px-4 py-8">
-            <!-- 标题与搜索 -->
-            <div class="mb-8 flex flex-col md:flex-row items-center justify-between">
-                <h2 class="text-2xl font-bold text-dark mb-4 md:mb-0">药品列表</h2>
-                <div class="w-full md:w-auto">
-                    <input type="text" id="searchInput"
-                           class="px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                           placeholder="搜索药品名称/生产商..." oninput="searchLive()">
+<!-- 主要内容区 -->
+<main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 搜索区域 -->
+    <section class="bg-white rounded-lg shadow-sm p-6 mb-6 animate-fade-in">
+        <h2 class="text-lg font-semibold text-neutral-700 mb-4">搜索药品</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-neutral-600">搜索关键词</label>
+                <div class="relative">
+                    <input type="text" id="searchQuery" placeholder="药品名称/生产商" class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <i class="fa fa-search"></i>
+                    </div>
                 </div>
             </div>
-
-            <!-- 药品展示表格 -->
-            <div class="bg-white rounded-xl shadow-card p-6">
-                <div id="loadingIndicator" class="flex justify-center py-8">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-neutral-600">搜索类型</label>
+                <select id="searchType" class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    <option value="all">所有字段</option>
+                    <option value="name">药品名称</option>
+                    <option value="manufacturer">生产商</option>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-neutral-600">价格范围</label>
+                <div class="flex space-x-2">
+                    <input type="number" id="priceMin" placeholder="最低价" class="flex-1 px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    <span class="flex items-center text-neutral-400">-</span>
+                    <input type="number" id="priceMax" placeholder="最高价" class="flex-1 px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
                 </div>
-                <table id="drugTable" class="min-w-full hidden">
-                    <thead>
-                    <tr class="bg-primary/10">
-                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">药品名称</th>
-                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">厂商</th>
-                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">价格</th>
-                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">库存</th>
-                    </tr>
-                    </thead>
-                    <tbody id="drugTableBody" class="divide-y divide-primary/10">
-                    <!-- 数据将通过JavaScript从数据库加载 -->
-                    </tbody>
-                </table>
-                <div id="noDataMessage" class="hidden text-center py-8 text-gray-500">
-                    <i class="fa fa-inbox text-4xl mb-4 block"></i>
-                    <p>暂无药品数据</p>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-neutral-600">库存状态</label>
+                <select id="stockStatus" class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    <option value="all">所有库存</option>
+                    <option value="inStock">库存充足</option>
+                    <option value="lowStock">库存不足</option>
+                    <option value="outOfStock">缺货</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="sortByNameAsc" class="w-4 h-4 text-primary focus:ring-primary border-neutral-300 rounded">
+                    <span class="text-sm text-neutral-600">按名称升序</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="sortByPriceAsc" class="w-4 h-4 text-primary focus:ring-primary border-neutral-300 rounded">
+                    <span class="text-sm text-neutral-600">按价格升序</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="sortByStockAsc" class="w-4 h-4 text-primary focus:ring-primary border-neutral-300 rounded">
+                    <span class="text-sm text-neutral-600">按库存升序</span>
+                </label>
+            </div>
+            <button id="searchBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-1">
+                <i class="fa fa-search"></i>
+                <span>搜索</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- 操作按钮区 -->
+    <section class="flex justify-between items-center mb-6 animate-fade-in">
+        <div class="text-neutral-500 text-sm">
+            共 <span id="totalCount" class="font-semibold text-primary">0</span> 条药品记录
+        </div>
+        <button id="addDrugBtn" class="bg-success hover:bg-success/90 text-white px-4 py-2 rounded-md transition-colors flex items-center space-x-1">
+            <i class="fa fa-plus"></i>
+            <span>添加药品</span>
+        </button>
+    </section>
+
+    <!-- 药品列表 -->
+    <section class="bg-white rounded-lg shadow-sm overflow-hidden animate-fade-in">
+        <div class="overflow-x-auto scrollbar-thin">
+            <table class="min-w-full divide-y divide-neutral-200">
+                <thead class="bg-neutral-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">药品名称</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">生产商</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">价格 (元)</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">库存</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">生产日期</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">过期日期</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">操作</th>
+                </tr>
+                </thead>
+                <tbody id="drugTableBody" class="bg-white divide-y divide-neutral-200">
+                <!-- 药品数据将通过JavaScript动态填充 -->
+                <tr class="text-center">
+                    <td colspan="8" class="px-6 py-10 text-neutral-400">
+                        <div class="flex flex-col items-center">
+                            <i class="fa fa-folder-open-o text-4xl mb-3"></i>
+                            <p>暂无药品数据</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页控件 -->
+        <div class="px-6 py-4 flex items-center justify-between border-t border-neutral-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button class="relative inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50">
+                    上一页
+                </button>
+                <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-neutral-300 text-sm font-medium rounded-md text-neutral-700 bg-white hover:bg-neutral-50">
+                    下一页
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-neutral-700">
+                        显示第 <span id="pageStart" class="font-medium">1</span> 到 <span id="pageEnd" class="font-medium">0</span> 条，共 <span id="paginationTotal" class="font-medium">0</span> 条
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button id="prevPageBtn" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-neutral-300 bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50">
+                            <span class="sr-only">上一页</span>
+                            <i class="fa fa-chevron-left text-xs"></i>
+                        </button>
+                        <div id="paginationNumbers" class="flex">
+                            <!-- 页码将通过JavaScript动态填充 -->
+                        </div>
+                        <button id="nextPageBtn" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-neutral-300 bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50">
+                            <span class="sr-only">下一页</span>
+                            <i class="fa fa-chevron-right text-xs"></i>
+                        </button>
+                    </nav>
                 </div>
             </div>
         </div>
-    </main>
+    </section>
+</main>
+
+<!-- 页脚 -->
+<footer class="bg-white border-t border-neutral-200 py-4">
+    <div class="container mx-auto px-4 text-center text-neutral-500 text-sm">
+        <p>© 2025 药品管理系统 - 版权所有</p>
+    </div>
+</footer>
+
+<!-- 添加/编辑药品模态框 -->
+<div id="drugModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center animate-fade-in">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 transform transition-all">
+        <div class="flex justify-between items-center p-6 border-b border-neutral-200">
+            <h3 id="modalTitle" class="text-lg font-semibold text-neutral-700">添加药品</h3>
+            <button id="closeModalBtn" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="drugForm" class="space-y-4">
+                <input type="hidden" id="drugId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">药品名称</label>
+                        <input type="text" id="drugName" required class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="请输入药品名称">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">生产商</label>
+                        <input type="text" id="drugManufacturer" required class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="请输入生产商">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">价格 (元)</label>
+                        <input type="number" id="drugPrice" required min="0" step="0.01" class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="请输入价格">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">库存</label>
+                        <input type="number" id="drugStock" required min="0" class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="请输入库存">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">生产日期</label>
+                        <input type="date" id="drugProductionDate" required class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-neutral-600">过期日期</label>
+                        <input type="date" id="drugExpiryDate" required class="w-full px-4 py-2 border border-neutral-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="p-6 border-t border-neutral-200 flex justify-end space-x-3">
+            <button id="cancelModalBtn" class="px-4 py-2 border border-neutral-300 rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors">
+                取消
+            </button>
+            <button id="saveDrugBtn" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                保存
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- 脚本 (共享) -->
+<!-- 确认删除模态框 -->
+<div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center animate-fade-in">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
+        <div class="p-6">
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-danger/10 text-danger mb-4">
+                    <i class="fa fa-exclamation-triangle text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-neutral-700">确认删除</h3>
+                <p class="text-neutral-500 mt-2">你确定要删除该药品吗？此操作不可撤销。</p>
+            </div>
+            <div class="flex justify-center space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 border border-neutral-300 rounded-md text-neutral-700 bg-white hover:bg-neutral-50 transition-colors">
+                    取消
+                </button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-md transition-colors">
+                    确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 通知提示 -->
+<div id="notification" class="fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 translate-y-[-100%] opacity-0">
+    <div id="notificationContent" class="bg-white rounded-lg shadow-lg p-4 flex items-start">
+        <div id="notificationIcon" class="mr-3 w-6 h-6 flex items-center justify-center rounded-full">
+            <i class="fa"></i>
+        </div>
+        <div class="flex-1">
+            <h4 id="notificationTitle" class="font-medium text-neutral-800"></h4>
+            <p id="notificationMessage" class="text-sm text-neutral-600 mt-1"></p>
+        </div>
+        <button id="closeNotificationBtn" class="text-neutral-400 hover:text-neutral-600 ml-2">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>
+</div>
+
 <script>
-    // 侧边栏切换
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
+    // 全局变量
+    let currentDrugId = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    let drugsPerPage = 10;
+    let allDrugs = [];
+    let filteredDrugs = [];
+
+    // DOM 加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化事件监听
+        initEventListeners();
+
+        // 设置默认日期为今天
+        const today = new Date();
+        document.getElementById('drugProductionDate').value = formatDate(today);
+
+        // 设置默认过期日期为一年后
+        const oneYearLater = new Date(today);
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        document.getElementById('drugExpiryDate').value = formatDate(oneYearLater);
+
+        // 加载药品数据
+        loadDrugs();
+    });
+
+    // 初始化事件监听
+    function initEventListeners() {
+        // 搜索按钮点击事件
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            searchDrugs();
+        });
+
+        // 添加药品按钮点击事件
+        document.getElementById('addDrugBtn').addEventListener('click', function() {
+            openAddDrugModal();
+        });
+
+        // 刷新按钮点击事件
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            loadDrugs();
+        });
+
+        // 关闭模态框按钮点击事件
+        document.getElementById('closeModalBtn').addEventListener('click', function() {
+            closeDrugModal();
+        });
+
+        // 取消模态框按钮点击事件
+        document.getElementById('cancelModalBtn').addEventListener('click', function() {
+            closeDrugModal();
+        });
+
+        // 保存药品按钮点击事件
+        document.getElementById('saveDrugBtn').addEventListener('click', function() {
+            saveDrug();
+        });
+
+        // 取消删除按钮点击事件
+        document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+            closeDeleteModal();
+        });
+
+        // 确认删除按钮点击事件
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            deleteDrug();
+        });
+
+        // 关闭通知按钮点击事件
+        document.getElementById('closeNotificationBtn').addEventListener('click', function() {
+            hideNotification();
+        });
+
+        // 排序复选框点击事件
+        document.getElementById('sortByNameAsc').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('sortByPriceAsc').checked = false;
+                document.getElementById('sortByStockAsc').checked = false;
+            }
+            searchDrugs();
+        });
+
+        document.getElementById('sortByPriceAsc').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('sortByNameAsc').checked = false;
+                document.getElementById('sortByStockAsc').checked = false;
+            }
+            searchDrugs();
+        });
+
+        document.getElementById('sortByStockAsc').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('sortByNameAsc').checked = false;
+                document.getElementById('sortByPriceAsc').checked = false;
+            }
+            searchDrugs();
+        });
+
+        // 分页按钮点击事件
+        document.getElementById('prevPageBtn').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDrugTable();
+                updatePagination();
+            }
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDrugTable();
+                updatePagination();
+            }
+        });
     }
 
-    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
-
-    // 数字时钟
-    function updateClock() {
-        const now = new Date();
-        let hours = now.getHours().toString().padStart(2, '0');
-        let minutes = now.getMinutes().toString().padStart(2, '0');
-        let seconds = now.getSeconds().toString().padStart(2, '0');
-        document.getElementById('digitalClock').textContent = `${hours}:${minutes}:${seconds}`;
-    }
-
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // 从数据库加载药品数据
+    // 加载药品数据
     function loadDrugs() {
-        const table = document.getElementById('drugTable');
-        const loading = document.getElementById('loadingIndicator');
-        const noData = document.getElementById('noDataMessage');
+        showLoading();
 
-        // 显示加载中状态
-        table.classList.add('hidden');
-        loading.classList.remove('hidden');
-        noData.classList.add('hidden');
-
-        // 模拟API调用从数据库获取数据
         fetch('/api/drugs')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('drugTableBody');
-                tableBody.innerHTML = '';
-
-                if (data.length === 0) {
-                    noData.classList.remove('hidden');
-                } else {
-                    data.forEach(drug => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.manufacturer}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">¥${drug.price.toFixed(2)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.stock}</td>
-                            `;
-                        tableBody.appendChild(row);
-                    });
-                    table.classList.remove('hidden');
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应失败');
                 }
+                return response.json();
+            })
+            .then(drugs => {
+                // 保存到全局变量
+                allDrugs = drugs;
+                filteredDrugs = [...drugs];
+
+                // 更新表格和分页
+                renderDrugTable();
+                updatePagination();
+
+                // 更新总数
+                document.getElementById('totalCount').textContent = drugs.length;
+
+                hideLoading();
+                showNotification('成功', '药品数据加载成功', 'success');
             })
             .catch(error => {
-                console.error('Error loading drugs:', error);
-                alert('加载药品数据失败，请稍后重试');
-            })
-            .finally(() => {
-                loading.classList.add('hidden');
+                hideLoading();
+                showNotification('错误', '加载药品数据失败: ' + error.message, 'danger');
             });
     }
 
-    // 实时搜索功能
-    function searchLive() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    // 搜索药品
+    function searchDrugs() {
+        // 获取搜索参数
+        const query = document.getElementById('searchQuery').value.trim().toLowerCase();
+        const type = document.getElementById('searchType').value;
+        const priceMin = document.getElementById('priceMin').value ? parseFloat(document.getElementById('priceMin').value) : null;
+        const priceMax = document.getElementById('priceMax').value ? parseFloat(document.getElementById('priceMax').value) : null;
+        const stockStatus = document.getElementById('stockStatus').value;
 
-        // 如果搜索框为空，重新加载全部数据
-        if (!searchTerm.trim()) {
-            loadDrugs();
+        // 构建排序参数
+        let sortBy = null;
+        if (document.getElementById('sortByNameAsc').checked) {
+            sortBy = 'name';
+        } else if (document.getElementById('sortByPriceAsc').checked) {
+            sortBy = 'price';
+        } else if (document.getElementById('sortByStockAsc').checked) {
+            sortBy = 'stock';
+        }
+
+        // 重置页码
+        currentPage = 1;
+
+        // 筛选数据
+        filteredDrugs = allDrugs.filter(drug => {
+            // 关键词过滤
+            let matchesQuery = true;
+            if (query) {
+                if (type === 'name') {
+                    matchesQuery = drug.name.toLowerCase().includes(query);
+                } else if (type === 'manufacturer') {
+                    matchesQuery = drug.manufacturer.toLowerCase().includes(query);
+                } else {
+                    matchesQuery = drug.name.toLowerCase().includes(query) ||
+                        drug.manufacturer.toLowerCase().includes(query);
+                }
+            }
+
+            // 价格过滤
+            let matchesPrice = true;
+            if (priceMin !== null && drug.price < priceMin) {
+                matchesPrice = false;
+            }
+            if (priceMax !== null && drug.price > priceMax) {
+                matchesPrice = false;
+            }
+
+            // 库存状态过滤
+            let matchesStock = true;
+            if (stockStatus !== 'all') {
+                if (stockStatus === 'inStock' && drug.stock <= 0) {
+                    matchesStock = false;
+                } else if (stockStatus === 'lowStock' && (drug.stock <= 0 || drug.stock >= 10)) {
+                    matchesStock = false;
+                } else if (stockStatus === 'outOfStock' && drug.stock > 0) {
+                    matchesStock = false;
+                }
+            }
+
+            return matchesQuery && matchesPrice && matchesStock;
+        });
+
+        // 排序
+        if (sortBy) {
+            filteredDrugs.sort((a, b) => {
+                if (sortBy === 'name') {
+                    return a.name.localeCompare(b.name);
+                } else if (sortBy === 'price') {
+                    return a.price - b.price;
+                } else if (sortBy === 'stock') {
+                    return a.stock - b.stock;
+                }
+                return 0;
+            });
+        }
+
+        // 更新表格和分页
+        renderDrugTable();
+        updatePagination();
+
+        // 更新总数
+        document.getElementById('totalCount').textContent = filteredDrugs.length;
+
+        // 显示搜索结果通知
+        if (filteredDrugs.length === 0) {
+            showNotification('提示', '未找到匹配的药品', 'warning');
+        } else {
+            showNotification('成功', `找到 ${filteredDrugs.length} 条匹配结果`, 'success');
+        }
+    }
+
+    // 渲染药品表格
+    function renderDrugTable() {
+        const tableBody = document.getElementById('drugTableBody');
+        tableBody.innerHTML = ''; // 清空原有内容
+
+        if (filteredDrugs.length === 0) {
+            tableBody.innerHTML = `
+                <tr class="text-center">
+                    <td colspan="8" class="px-6 py-10 text-neutral-400">
+                        <div class="flex flex-col items-center">
+                            <i class="fa fa-folder-open-o text-4xl mb-3"></i>
+                            <p>暂无药品数据</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        // 模拟搜索API调用
-        fetch(`/api/drugs/search?query=${encodeURIComponent(searchTerm)}`)
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('drugTableBody');
-                const table = document.getElementById('drugTable');
-                const noData = document.getElementById('noDataMessage');
+        // 计算当前页的数据
+        const startIndex = (currentPage - 1) * drugsPerPage;
+        const endIndex = Math.min(startIndex + drugsPerPage, filteredDrugs.length);
+        const currentPageDrugs = filteredDrugs.slice(startIndex, endIndex);
 
-                tableBody.innerHTML = '';
+        // 更新分页信息
+        document.getElementById('pageStart').textContent = startIndex + 1;
+        document.getElementById('pageEnd').textContent = endIndex;
+        document.getElementById('paginationTotal').textContent = filteredDrugs.length;
 
-                if (data.length === 0) {
-                    table.classList.add('hidden');
-                    noData.classList.remove('hidden');
-                } else {
-                    data.forEach(drug => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.manufacturer}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">¥${drug.price.toFixed(2)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${drug.stock}</td>
-                            `;
-                        tableBody.appendChild(row);
-                    });
-                    table.classList.remove('hidden');
-                    noData.classList.add('hidden');
+        // 渲染表格行
+        currentPageDrugs.forEach(drug => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-neutral-50 transition-colors';
+
+            // 确定库存状态类
+            let stockBadgeClass = 'stock-badge-in-stock';
+            if (drug.stock === 0) {
+                stockBadgeClass = 'stock-badge-out-of-stock';
+            } else if (drug.stock < 10) {
+                stockBadgeClass = 'stock-badge-low-stock';
+            }
+
+            // 确定过期状态类
+            const today = new Date();
+            const expiryDate = new Date(drug.expiryDate);
+            let expiryStatusClass = 'text-success';
+            if (expiryDate < today) {
+                expiryStatusClass = 'text-danger';
+            } else if (expiryDate < new Date(today.setMonth(today.getMonth() + 1))) {
+                expiryStatusClass = 'text-warning';
+            }
+
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">${drug.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${drug.name}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${drug.manufacturer}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${drug.price.toFixed(2)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="stock-badge ${stockBadgeClass}">
+                        ${drug.stock} ${drug.stock === 0 ? '缺货' : drug.stock < 10 ? '库存不足' : '库存充足'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(drug.productionDate)}</td>
+                <td class="px-6 py-4 whitespace-nowrap ${expiryStatusClass}">
+                    ${formatDate(drug.expiryDate)}
+                    ${expiryDate < today ? '<span class="ml-1 text-xs">(已过期)</span>' :
+                expiryDate < new Date(today.setMonth(today.getMonth() + 1)) ? '<span class="ml-1 text-xs">(即将过期)</span>' : ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="openEditDrugModal(${drug.id})" class="text-primary hover:text-primary/80 mr-3">
+                        <i class="fa fa-pencil mr-1"></i>编辑
+                    </button>
+                    <button onclick="prepareDeleteDrug(${drug.id})" class="text-danger hover:text-danger/80">
+                        <i class="fa fa-trash mr-1"></i>删除
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // 更新分页控件
+    function updatePagination() {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        paginationNumbers.innerHTML = '';
+
+        // 计算总页数
+        totalPages = Math.ceil(filteredDrugs.length / drugsPerPage);
+
+        // 确定显示的页码范围
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        if (endPage - startPage < 4 && startPage > 1) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        // 添加首页按钮
+        if (startPage > 1) {
+            addPageButton(1);
+            if (startPage > 2) {
+                addEllipsis();
+            }
+        }
+
+        // 添加页码按钮
+        for (let i = startPage; i <= endPage; i++) {
+            addPageButton(i);
+        }
+
+        // 添加尾页按钮
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                addEllipsis();
+            }
+            addPageButton(totalPages);
+        }
+
+        // 禁用/启用上一页和下一页按钮
+        document.getElementById('prevPageBtn').disabled = currentPage === 1;
+        document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+    }
+
+    // 添加分页按钮
+    function addPageButton(pageNumber) {
+        const button = document.createElement('button');
+        button.className = `pagination-item ${currentPage === pageNumber ? 'active' : ''}`;
+        button.textContent = pageNumber;
+
+        button.addEventListener('click', function() {
+            currentPage = pageNumber;
+            renderDrugTable();
+            updatePagination();
+        });
+
+        document.getElementById('paginationNumbers').appendChild(button);
+    }
+
+    // 添加省略号
+    function addEllipsis() {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-item';
+        ellipsis.textContent = '...';
+        ellipsis.style.pointerEvents = 'none';
+        document.getElementById('paginationNumbers').appendChild(ellipsis);
+    }
+
+    // 打开添加药品模态框
+    function openAddDrugModal() {
+        currentDrugId = null;
+        document.getElementById('modalTitle').textContent = '添加药品';
+        document.getElementById('drugForm').reset();
+
+        // 设置默认日期
+        const today = new Date();
+        document.getElementById('drugProductionDate').value = formatDate(today);
+
+        const oneYearLater = new Date(today);
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        document.getElementById('drugExpiryDate').value = formatDate(oneYearLater);
+
+        // 显示模态框
+        document.getElementById('drugModal').style.display = 'flex';
+    }
+
+    // 打开编辑药品模态框
+    function openEditDrugModal(id) {
+        currentDrugId = id;
+        document.getElementById('modalTitle').textContent = '编辑药品';
+
+        // 查找药品数据
+        const drug = allDrugs.find(d => d.id === id);
+        if (!drug) {
+            showNotification('错误', '未找到该药品', 'danger');
+            return;
+        }
+
+        // 填充表单
+        document.getElementById('drugId').value = drug.id;
+        document.getElementById('drugName').value = drug.name;
+        document.getElementById('drugManufacturer').value = drug.manufacturer;
+        document.getElementById('drugPrice').value = drug.price;
+        document.getElementById('drugStock').value = drug.stock;
+        document.getElementById('drugProductionDate').value = formatDate(new Date(drug.productionDate));
+        document.getElementById('drugExpiryDate').value = formatDate(new Date(drug.expiryDate));
+
+        // 显示模态框
+        document.getElementById('drugModal').style.display = 'flex';
+    }
+
+    // 准备删除药品
+    function prepareDeleteDrug(id) {
+        currentDrugId = id; // 保存待删除的药品ID
+        document.getElementById('confirmDeleteModal').style.display = 'flex'; // 显示确认模态框
+    }
+
+    // 关闭药品模态框
+    function closeDrugModal() {
+        document.getElementById('drugModal').style.display = 'none';
+    }
+
+    // 关闭删除模态框
+    function closeDeleteModal() {
+        document.getElementById('confirmDeleteModal').style.display = 'none';
+    }
+
+    function saveDrug() {
+        // 表单验证（确保所有必填字段）
+        const name = document.getElementById('drugName').value.trim();
+        const manufacturer = document.getElementById('drugManufacturer').value.trim();
+        const priceInput = document.getElementById('drugPrice');
+        const stockInput = document.getElementById('drugStock');
+        const productionDate = document.getElementById('drugProductionDate').value;
+        const expiryDate = document.getElementById('drugExpiryDate').value;
+
+        if (!name || !manufacturer || isNaN(priceInput.value) || isNaN(stockInput.value) || !productionDate || !expiryDate) {
+            showNotification('错误', '请填写所有必填字段', 'danger');
+            return;
+        }
+
+        const price = parseFloat(priceInput.value);
+        const stock = parseInt(stockInput.value);
+
+        // 日期验证（过期日期必须晚于生产日期）
+        const prodDate = new Date(productionDate);
+        const expDate = new Date(expiryDate);
+        if (expDate <= prodDate) {
+            showNotification('错误', '过期日期必须晚于生产日期', 'danger');
+            return;
+        }
+
+        const drugId = document.getElementById('drugId').value;
+        const drug = {
+            name,
+            manufacturer,
+            price,
+            stock,
+            productionDate,
+            expiryDate
+        };
+
+        // 添加ID（更新操作时）
+        if (drugId) {
+            drug.id = parseInt(drugId);
+        }
+
+        showLoading(); // 显示加载状态
+
+        const method = drugId ? 'PUT' : 'POST';
+        const url = drugId ? `/api/drugs/${drugId}` : '/api/drugs';
+
+        fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(drug)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(savedDrug => {
+                hideLoading();
+                showNotification('成功', drugId ? '药品更新成功' : '药品添加成功', 'success');
+                closeDrugModal(); // 关闭模态框
+
+                // 重新加载数据（确保表格更新）
+                loadDrugs(); // 或 searchDrugs()，根据业务逻辑选择
             })
             .catch(error => {
-                console.error('Error searching drugs:', error);
-                // 出错时重新加载全部数据
-                loadDrugs();
+                hideLoading();
+                showNotification('错误', `操作失败: ${error.message}`, 'danger');
             });
     }
 
-    // 页面加载完成后加载药品数据
-    document.addEventListener('DOMContentLoaded', loadDrugs);
+
+    // 删除药品
+    function deleteDrug() {
+        if (!currentDrugId) {
+            showNotification('错误', '未选择药品', 'danger');
+            return;
+        }
+
+        showLoading();
+
+        fetch(`/api/drugs/${currentDrugId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (response.ok) {
+                    // 成功删除，无需解析JSON，直接处理
+                    hideLoading();
+                    showNotification('成功', '药品删除成功', 'success');
+                    closeDeleteModal();
+                    currentDrugId = null;
+                    // 重新加载数据
+                    loadDrugs();
+                } else {
+                    // 处理错误情况，尝试解析错误信息
+                    return response.text().then(errorText => {
+                        throw new Error(errorText);
+                    });
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showNotification('错误', `删除药品失败: ${error.message}`, 'danger');
+            });
+    }
+
+    // 显示通知
+    function showNotification(title, message, type = 'success') {
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationContent = document.getElementById('notificationContent');
+
+        // 设置通知内容
+        notificationTitle.textContent = title;
+        notificationMessage.textContent = message;
+
+        // 设置通知类型
+        notificationIcon.className = 'mr-3 w-6 h-6 flex items-center justify-center rounded-full';
+        notificationContent.className = 'bg-white rounded-lg shadow-lg p-4 flex items-start';
+
+        if (type === 'success') {
+            notificationIcon.classList.add('bg-success/10', 'text-success');
+            notificationIcon.querySelector('i').className = 'fa fa-check';
+            notificationContent.classList.add('border-l-4', 'border-success');
+        } else if (type === 'error' || type === 'danger') {
+            notificationIcon.classList.add('bg-danger/10', 'text-danger');
+            notificationIcon.querySelector('i').className = 'fa fa-times';
+            notificationContent.classList.add('border-l-4', 'border-danger');
+        } else if (type === 'warning') {
+            notificationIcon.classList.add('bg-warning/10', 'text-warning');
+            notificationIcon.querySelector('i').className = 'fa fa-exclamation-triangle';
+            notificationContent.classList.add('border-l-4', 'border-warning');
+        } else if (type === 'info') {
+            notificationIcon.classList.add('bg-primary/10', 'text-primary');
+            notificationIcon.querySelector('i').className = 'fa fa-info';
+            notificationContent.classList.add('border-l-4', 'border-primary');
+        }
+
+        // 显示通知
+        notification.style.transform = 'translateY(0)';
+        notification.style.opacity = '1';
+
+        // 设置自动关闭
+        clearTimeout(window.notificationTimeout);
+        window.notificationTimeout = setTimeout(hideNotification, 5000);
+    }
+
+    // 隐藏通知
+    function hideNotification() {
+        const notification = document.getElementById('notification');
+        notification.style.transform = 'translateY(-100%)';
+        notification.style.opacity = '0';
+    }
+
+    // 显示加载状态
+    function showLoading() {
+        // 这里可以添加加载指示器
+    }
+
+    // 隐藏加载状态
+    function hideLoading() {
+        // 这里可以移除加载指示器
+    }
+
+    // 生成唯一ID
+    function generateId() {
+        return 'drug_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    }
+
+    // 格式化日期
+    function formatDate(date) {
+        if (!date) return '';
+
+        if (typeof date === 'string') {
+            // 如果是ISO格式的字符串，先转换为Date对象
+            date = new Date(date);
+        }
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }
 </script>
 </body>
 </html>
