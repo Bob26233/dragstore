@@ -1,0 +1,260 @@
+<!-- index.html (主页) -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>药品交易平台 - 药品列表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <!-- 共享样式 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        warning: '#FF9F1C',
+                        danger: '#FF595E',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .transition-all {
+                transition: all 0.3s ease;
+            }
+            .sidebar-width {
+                width: 240px;
+            }
+            .main-content {
+                width: calc(100% - 240px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+<!-- 顶部导航栏 (共享) -->
+<header class="bg-primary shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <button id="sidebarToggle" class="md:hidden text-white focus:outline-none">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+            <i class="fa fa-medkit text-2xl text-white"></i>
+            <h1 class="text-xl md:text-2xl font-bold text-white">药品交易平台</h1>
+        </div>
+        <div id="digitalClock" class="hidden md:block text-white font-mono text-lg bg-primary/20 px-3 py-1 rounded-lg">
+            00:00:00
+        </div>
+        <nav class="hidden md:flex items-center space-x-6">
+            <a href="index.html" class="text-white hover:text-gray-200 transition-all font-medium">药品管理</a>
+            <a href="#" class="text-white hover:text-gray-200 transition-all font-medium">快速搜索</a>
+        </nav>
+    </div>
+</header>
+
+<!-- 主体布局 (共享) -->
+<div class="flex flex-1 overflow-hidden">
+    <!-- 侧边栏 (共享) -->
+    <aside id="sidebar" class="sidebar-width bg-white shadow-md fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 transition-all duration-300">
+        <div class="p-4">
+            <h3 class="text-lg font-semibold text-primary mb-4">功能导航</h3>
+            <ul class="space-y-1">
+                <li>
+                    <a href="index.html" class="flex items-center px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
+                        <i class="fa fa-pills w-6"></i>
+                        <span>药品展示</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="search.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
+                        <i class="fa fa-search w-6"></i>
+                        <span>关键词搜索</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="stock.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
+                        <i class="fa fa-plus-square w-6"></i>
+                        <span>药品库存增加</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!-- 删除了管理员信息区域 -->
+    </aside>
+
+    <!-- 遮罩层 (共享) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- 主要内容区 -->
+    <main class="flex-1 overflow-y-auto p-6 md:pl-0">
+        <div class="container mx-auto px-4 py-8">
+            <!-- 标题与搜索 -->
+            <div class="mb-8 flex flex-col md:flex-row items-center justify-between">
+                <h2 class="text-2xl font-bold text-dark mb-4 md:mb-0">药品列表</h2>
+                <div class="w-full md:w-auto">
+                    <input type="text" id="searchInput"
+                           class="px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                           placeholder="搜索药品名称/生产商..." oninput="searchLive()">
+                </div>
+            </div>
+
+            <!-- 药品展示表格 -->
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <div id="loadingIndicator" class="flex justify-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                </div>
+                <table id="drugTable" class="min-w-full hidden">
+                    <thead>
+                    <tr class="bg-primary/10">
+                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">药品名称</th>
+                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">厂商</th>
+                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">价格</th>
+                        <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">库存</th>
+                    </tr>
+                    </thead>
+                    <tbody id="drugTableBody" class="divide-y divide-primary/10">
+                    <!-- 数据将通过JavaScript从数据库加载 -->
+                    </tbody>
+                </table>
+                <div id="noDataMessage" class="hidden text-center py-8 text-gray-500">
+                    <i class="fa fa-inbox text-4xl mb-4 block"></i>
+                    <p>暂无药品数据</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 脚本 (共享) -->
+<script>
+    // 侧边栏切换
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+    // 数字时钟
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours().toString().padStart(2, '0');
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let seconds = now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('digitalClock').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // 从数据库加载药品数据
+    function loadDrugs() {
+        const table = document.getElementById('drugTable');
+        const loading = document.getElementById('loadingIndicator');
+        const noData = document.getElementById('noDataMessage');
+
+        // 显示加载中状态
+        table.classList.add('hidden');
+        loading.classList.remove('hidden');
+        noData.classList.add('hidden');
+
+        // 模拟API调用从数据库获取数据
+        fetch('/api/drugs')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('drugTableBody');
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    noData.classList.remove('hidden');
+                } else {
+                    data.forEach(drug => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.manufacturer}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">¥${drug.price.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.stock}</td>
+                            `;
+                        tableBody.appendChild(row);
+                    });
+                    table.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading drugs:', error);
+                alert('加载药品数据失败，请稍后重试');
+            })
+            .finally(() => {
+                loading.classList.add('hidden');
+            });
+    }
+
+    // 实时搜索功能
+    function searchLive() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+        // 如果搜索框为空，重新加载全部数据
+        if (!searchTerm.trim()) {
+            loadDrugs();
+            return;
+        }
+
+        // 模拟搜索API调用
+        fetch(`/api/drugs/search?query=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('drugTableBody');
+                const table = document.getElementById('drugTable');
+                const noData = document.getElementById('noDataMessage');
+
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    table.classList.add('hidden');
+                    noData.classList.remove('hidden');
+                } else {
+                    data.forEach(drug => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.manufacturer}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">¥${drug.price.toFixed(2)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${drug.stock}</td>
+                            `;
+                        tableBody.appendChild(row);
+                    });
+                    table.classList.remove('hidden');
+                    noData.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error searching drugs:', error);
+                // 出错时重新加载全部数据
+                loadDrugs();
+            });
+    }
+
+    // 页面加载完成后加载药品数据
+    document.addEventListener('DOMContentLoaded', loadDrugs);
+</script>
+</body>
+</html>

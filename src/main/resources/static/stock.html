@@ -1,0 +1,334 @@
+<!-- stock.html (库存管理页面) -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>药品交易平台 - 库存管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <!-- 共享样式 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        warning: '#FF9F1C',
+                        danger: '#FF595E',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .transition-all {
+                transition: all 0.3s ease;
+            }
+            .sidebar-width {
+                width: 240px;
+            }
+            .main-content {
+                width: calc(100% - 240px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+<!-- 顶部导航栏 (共享) -->
+<header class="bg-primary shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <button id="sidebarToggle" class="md:hidden text-white focus:outline-none">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+            <i class="fa fa-medkit text-2xl text-white"></i>
+            <h1 class="text-xl md:text-2xl font-bold text-white">药品交易平台</h1>
+        </div>
+        <div id="digitalClock" class="hidden md:block text-white font-mono text-lg bg-primary/20 px-3 py-1 rounded-lg">
+            00:00:00
+        </div>
+        <nav class="hidden md:flex items-center space-x-6">
+            <a href="index.html" class="text-white hover:text-gray-200 transition-all font-medium">药品管理</a>
+            <a href="#" class="text-white hover:text-gray-200 transition-all font-medium">快速搜索</a>
+        </nav>
+    </div>
+</header>
+
+<!-- 主体布局 (共享) -->
+<div class="flex flex-1 overflow-hidden">
+    <!-- 侧边栏 (共享) -->
+    <aside id="sidebar" class="sidebar-width bg-white shadow-md fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 transition-all duration-300">
+        <div class="p-4">
+            <h3 class="text-lg font-semibold text-primary mb-4">功能导航</h3>
+            <ul class="space-y-1">
+                <li>
+                    <a href="index.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
+                        <i class="fa fa-pills w-6"></i>
+                        <span>药品展示</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="search.html" class="flex items-center px-4 py-2 rounded-lg hover:bg-gray-100 text-dark font-medium transition-all">
+                        <i class="fa fa-search w-6"></i>
+                        <span>关键词搜索</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="stock.html" class="flex items-center px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
+                        <i class="fa fa-plus-square w-6"></i>
+                        <span>药品库存增加</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!-- 删除了管理员信息区域 -->
+    </aside>
+
+    <!-- 遮罩层 (共享) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- 主要内容区 -->
+    <main class="flex-1 overflow-y-auto p-6 md:pl-0">
+        <div class="container mx-auto px-4 py-8">
+            <!-- 标题 -->
+            <h2 class="text-2xl font-bold text-dark mb-8">药品库存增加</h2>
+
+            <!-- 库存增加表单 -->
+            <div class="bg-white rounded-xl shadow-card p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">选择药品</label>
+                        <select id="drugSelect" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
+                            <option value="">请选择药品</option>
+                            <!-- 药品选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">增加数量</label>
+                        <input type="number" id="increaseAmount" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                               placeholder="请输入增加数量" min="1">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="increaseStock()" class="w-full bg-secondary text-white px-4 py-2 rounded-lg shadow-md hover:bg-secondary/90 transition-all">
+                            <i class="fa fa-plus-circle mr-2"></i>增加库存
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 库存操作记录 -->
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <h3 class="text-lg font-medium text-dark mb-4">最近库存操作记录</h3>
+                <div id="loadingHistory" class="flex justify-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                </div>
+                <div id="stockHistoryContainer" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                            <tr class="bg-primary/10">
+                                <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">操作时间</th>
+                                <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">药品名称</th>
+                                <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">操作类型</th>
+                                <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">数量</th>
+                                <th class="px-6 py-3 border-b-2 border-primary/20 text-left text-sm font-semibold">操作人</th>
+                            </tr>
+                            </thead>
+                            <tbody id="stockHistory" class="divide-y divide-primary/10">
+                            <!-- 库存历史将通过JavaScript动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="noHistoryMessage" class="hidden text-center py-8 text-gray-500">
+                    <i class="fa fa-history text-4xl mb-4 block"></i>
+                    <p>暂无库存操作记录</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 脚本 (共享) -->
+<script>
+    // 侧边栏切换
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+
+    // 数字时钟
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours().toString().padStart(2, '0');
+        let minutes = now.getMinutes().toString().padStart(2, '0');
+        let seconds = now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('digitalClock').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDrugOptions();
+        loadStockHistory();
+    });
+
+    // 加载药品选项
+    function loadDrugOptions() {
+        const drugSelect = document.getElementById('drugSelect');
+
+        // 清空现有选项
+        drugSelect.innerHTML = '<option value="">请选择药品</option>';
+
+        // 从数据库加载药品选项
+        fetch('/api/drugs')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(drug => {
+                    const option = document.createElement('option');
+                    option.value = drug.id;
+                    option.textContent = `${drug.name} (库存: ${drug.stock})`;
+                    drugSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading drug options:', error);
+                alert('加载药品列表失败，请稍后重试');
+            });
+    }
+
+    // 加载库存历史记录
+    function loadStockHistory() {
+        const historyContainer = document.getElementById('stockHistory');
+        const loading = document.getElementById('loadingHistory');
+        const noData = document.getElementById('noHistoryMessage');
+        const container = document.getElementById('stockHistoryContainer');
+
+        // 显示加载中状态
+        loading.classList.remove('hidden');
+        container.classList.add('hidden');
+        noData.classList.add('hidden');
+
+        // 从数据库加载库存历史
+        fetch('/api/stock/history')
+            .then(response => response.json())
+            .then(data => {
+                historyContainer.innerHTML = '';
+
+                if (data.length === 0) {
+                    noData.classList.remove('hidden');
+                } else {
+                    data.forEach(record => {
+                        const row = document.createElement('tr');
+                        const isIncrease = record.type === 'increase';
+
+                        row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">${record.time}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${record.drugName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-${isIncrease ? 'green' : 'red'}-600">${isIncrease ? '库存增加' : '库存减少'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${isIncrease ? '+' : '-' }${record.amount}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${record.operator}</td>
+                            `;
+                        historyContainer.appendChild(row);
+                    });
+                    container.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stock history:', error);
+                alert('加载库存历史失败，请稍后重试');
+            })
+            .finally(() => {
+                loading.classList.add('hidden');
+            });
+    }
+
+    // 增加库存功能
+    function increaseStock() {
+        const drugSelect = document.getElementById('drugSelect');
+        const increaseAmount = document.getElementById('increaseAmount');
+
+        if (!drugSelect.value) {
+            alert('请选择药品');
+            return;
+        }
+
+        if (!increaseAmount.value || increaseAmount.value <= 0) {
+            alert('请输入有效的增加数量');
+            return;
+        }
+
+        // 确认对话框
+        if (!confirm(`确定要为 ${drugSelect.options[drugSelect.selectedIndex].text.split(' (')[0]} 增加 ${increaseAmount.value} 库存吗？`)) {
+            return;
+        }
+
+        // 显示加载状态
+        const button = document.querySelector('button[onclick="increaseStock()"]');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>处理中...';
+
+        // 发送API请求
+        fetch('/api/stock/increase', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                drugId: drugSelect.value,
+                amount: parseInt(increaseAmount.value)
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('服务器响应错误');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('库存增加成功！');
+                    // 重置表单
+                    drugSelect.value = '';
+                    increaseAmount.value = '';
+                    // 刷新药品选项和库存历史
+                    loadDrugOptions();
+                    loadStockHistory();
+                } else {
+                    alert(data.message || '库存增加失败');
+                }
+            })
+            .catch(error => {
+                console.error('Error increasing stock:', error);
+                alert('库存增加失败，请稍后重试');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+    }
+</script>
+</body>
+</html>
